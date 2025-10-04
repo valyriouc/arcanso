@@ -4,7 +4,8 @@ namespace DataStore.FileSystem;
 
 public class FileSystemManager
 {
-    private readonly FileSystemOperator _operator = new();
+    private readonly FileManager _operator = new();
+    private readonly DirectoryManager _directoryManager = new();
 
     public async Task<TEntity> ReadAsync<TEntity>(
         IIdentifier identifier,
@@ -40,19 +41,6 @@ public class FileSystemManager
         CancellationToken cancellationToken) =>
         _operator.DeleteAsync(identifier, cancellationToken);
     
-    public Task CreateDirectoryAsync(
-        IIdentifier identifier, 
-        CancellationToken cancellationToken)
-    {
-        if (identifier is not DirectoryIdentifier dsi)
-        {
-            throw new ArgumentException("Invalid identifier type");
-        }
-        
-        Directory.CreateDirectory((string)identifier.CreateId());
-        return Task.CompletedTask;
-    }
-
     public IEnumerable<IIdentifier> EnumerateIdentifiers(string path)
     {
         if (!Directory.Exists(path))
@@ -75,5 +63,26 @@ public class FileSystemManager
     
     public IEnumerable<IIdentifier> EnumerateIdentifiers(DirectoryIdentifier identifier) =>
         EnumerateIdentifiers((string)identifier.CreateId());
-    
+
+    // CRUD für Verzeichnisse
+    public async Task CreateDirectoryAsync(
+        DirectoryIdentifier identifier,
+        CancellationToken cancellationToken)
+    {
+        await _directoryManager.CreateDirectoryAsync(identifier, cancellationToken);
+    }
+
+    public async Task DeleteDirectoryAsync(
+        DirectoryIdentifier identifier,
+        CancellationToken cancellationToken)
+    {
+        await _directoryManager.DeleteAsync(identifier, cancellationToken);
+    }
+
+    public IEnumerable<IIdentifier> EnumerateDirectory(string path)
+    {
+        return _directoryManager.EnumerateIdentifiers(path);
+    }
+
+    // CRUD für Dateien (wie bisher)
 }

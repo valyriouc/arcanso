@@ -1,32 +1,31 @@
 ﻿namespace DataStore;
 
-public interface IRead
+public interface IRead<T>
+    where T : IIdentifier
 {
     public Task<Memory<byte>> ReadAsync(
         IIdentifier identifier, 
         CancellationToken cancellationToken);
 }
 
-public interface IWrite
+public interface IWrite<T> 
+    where T : IIdentifier
 {
     public Task WriteAsync(
-        IIdentifier identifier,
+        T identifier,
         Memory<byte> content, 
         CancellationToken cancellationToken);
 }
 
-public interface IDelete
+public interface IDelete<T> 
+    where  T : IIdentifier
 {
     public Task DeleteAsync(
-        IIdentifier identifier,
+        T identifier,
         CancellationToken cancellationToken);
 }
 
-public interface IReadWrite : IRead, IWrite;
-
-public interface ICrud : IReadWrite, IDelete;
-
 public interface IIdentifier
 {
-    public object CreateId();
+    
 }

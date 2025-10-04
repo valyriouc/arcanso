@@ -2,18 +2,13 @@
 
 namespace DataStore.FileSystem;
 
-public class FileSystemOperator : ICrud
+public class FileManager
 {
+    
     public async Task<Memory<byte>> ReadAsync(
-        IIdentifier identifier, 
+        string filepath, 
         CancellationToken cancellationToken)
     {
-        if (identifier is not FileIdentifier fsi)
-        {
-            throw new ArgumentException("Invalid identifier type");
-        }
-        
-        var filepath = (string)identifier.CreateId();
         if (!File.Exists(filepath))
         {
             throw new FileNotFoundException(filepath);
@@ -25,46 +20,52 @@ public class FileSystemOperator : ICrud
     }
 
     public async Task<string> ReadAsStringAsync(
-        IIdentifier identifier,
+        string filepath,
         CancellationToken cancellationToken) =>
         Encoding.UTF8.GetString(
-            (await ReadAsync(identifier, cancellationToken)).Span);
+            (await ReadAsync(filepath, cancellationToken)).Span);
 
     public async Task WriteAsync(
-        IIdentifier identifier, 
+        string filepath,
         Memory<byte> content, 
         CancellationToken cancellationToken)
     {
-        if (identifier is not FileIdentifier fsi)
-        {
-            throw new ArgumentException("Invalid identifier type");
-        }
-        
         await File.WriteAllBytesAsync(
-            (string)identifier.CreateId(), 
+            filepath,
             content.ToArray(), 
             cancellationToken);
     }
     
     public async Task WriteAsync(
-        IIdentifier identifier,
+        string filepath,
         string content,
         CancellationToken cancellationToken) =>
         await WriteAsync(
-            identifier, 
+            filepath,
             Encoding.UTF8.GetBytes(content),
             cancellationToken);
 
-    public Task DeleteAsync(
-        IIdentifier identifier, 
+    public void Delete(
+        string filepath) =>
+        File.Delete(filepath);
+
+    public async Task DeleteAsync(
+        string filepath,
         CancellationToken cancellationToken)
     {
-        if (identifier is not FileIdentifier fsi)
+        if (File.Exists(filepath))
         {
-            throw new ArgumentException("Invalid identifier type");
+            await Task.Run(() => File.Delete(filepath), cancellationToken);
         }
-        
-        File.Delete((string)identifier.CreateId());
-        return Task.CompletedTask;
+    }
+
+    public async Task DeleteAsync(
+        IIdentifier identifier,
+        CancellationToken cancellationToken)
+    {
+        string filepath = identifier is FileIdentifier fileId
+            ? (string)fileId.CreateId()
+            : throw new ArgumentException("Identifier is not a FileIdentifier");
+        await DeleteAsync(filepath, cancellationToken);
     }
 }
